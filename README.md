@@ -56,7 +56,19 @@ El frontend consume la API de
 llave digital y check-out con factura. Precios en USD, con temporada alta (x1.5) en junio,
 julio y diciembre.
 
-La URL del backend se configura con la variable `VITE_API_URL` (ver `.env.example`):
+### API en Vercel
+
+En produccion la API corre en el mismo proyecto de Vercel como funcion serverless
+(`api/hotel.js`): `server/hotelFacade.js` replica en Node la fachada del backend Java
+(mismos endpoints, reglas de precio y respuestas JSON) y `server/store.js` guarda los datos en
+un JSON privado de Vercel Blob, con escrituras condicionales por ETag. A diferencia del
+backend en memoria, las reservas persisten entre despliegues.
+
+Demo: https://frontend-reservas-en-hotel.vercel.app
+
+### Backend Spring Boot local
+
+Para desarrollar contra el backend Java, su URL se configura con `VITE_API_URL` (ver `.env.example`):
 
 ```bash
 # .env.development.local
