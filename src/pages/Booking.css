@@ -287,14 +287,15 @@
 
 .reserva-codigo {
   display: inline-block;
-  margin: 0 0 var(--space-6);
-  padding: var(--space-2) var(--space-6);
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
   border: 1px dashed var(--color-accent);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-accent) 8%, var(--color-card));
-  font-family: var(--font-heading);
-  font-size: 26px;
-  letter-spacing: 0.15em;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-size: 15px;
+  word-break: break-all;
   color: var(--color-accent);
 }
 
@@ -365,5 +366,146 @@
 
   .success-resumen {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Disponibilidad */
+.disp-status {
+  min-height: 28px;
+}
+
+.disp {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.disp--loading {
+  color: var(--color-muted-foreground);
+}
+
+.disp--ok {
+  color: var(--color-success);
+}
+
+.disp--error {
+  color: var(--color-destructive);
+}
+
+/* Servicios adicionales */
+.servicios {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  border: none;
+}
+
+.servicios legend {
+  margin-bottom: var(--space-3);
+  padding: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.servicio-opcion {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: var(--space-3) var(--space-4);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
+}
+
+.servicio-opcion:hover {
+  border-color: var(--color-secondary);
+}
+
+.servicio-opcion.is-selected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-card));
+}
+
+.servicio-opcion input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.servicio-opcion:has(input:focus-visible) {
+  outline: 3px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.servicio-opcion-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-card));
+  color: var(--color-accent);
+}
+
+.servicio-opcion-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.servicio-opcion-info span {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}
+
+.servicio-opcion-precio {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-align: right;
+}
+
+.servicio-opcion-precio small {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.summary-nota {
+  margin: var(--space-3) 0 0;
+  font-size: 13px;
+  color: var(--color-accent);
+}
+
+.codigo-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+}
+
+@media (max-width: 560px) {
+  .servicio-opcion {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .servicio-opcion-icon {
+    display: none;
   }
 }

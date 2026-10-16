@@ -4,18 +4,33 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
+  Car,
   Check,
   CircleAlert,
+  CircleCheck,
+  Coffee,
+  Copy,
+  Flower2,
   Loader2,
 } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { useAuth } from '../context/AuthContext';
-import { getRoomById, formatCOP } from '../data/rooms';
-import { IVA, createReservation, nightsBetween, totalConIva } from '../services/reservationService';
+import { getRoomById, formatPrecio } from '../data/rooms';
+import {
+  SERVICIOS,
+  createReservation,
+  estimateRoomCost,
+  getAvailability,
+  nightsBetween,
+  nombreServicio,
+  servicioCost,
+} from '../services/reservationService';
 import './Booking.css';
 
 const EASE = [0.22, 1, 0.36, 1];
-const PASOS = ['Fechas', 'Datos', 'Confirmacion'];
+const PASOS = ['Fechas', 'Servicios', 'Confirmacion'];
+const ICONOS_SERVICIO = { SPA: Flower2, BREAKFAST: Coffee, AIRPORT_TRANSPORT: Car };
+const MESES_ALTA = [6, 7, 12];
 
 function dateStr(d) {
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
@@ -30,6 +45,16 @@ function addDays(iso, days) {
   const d = new Date(`${iso}T00:00:00`);
   d.setDate(d.getDate() + days);
   return dateStr(d);
+}
+
+function tocaTemporadaAlta(checkIn, checkOut) {
+  const noches = nightsBetween(checkIn, checkOut);
+  const d = new Date(`${checkIn}T00:00:00`);
+  for (let i = 0; i < noches; i++) {
+    if (MESES_ALTA.includes(d.getMonth() + 1)) return true;
+    d.setDate(d.getDate() + 1);
+  }
+  return false;
 }
 
 const fechaFmt = new Intl.DateTimeFormat('es-CO', {
@@ -73,13 +98,14 @@ export default function Booking() {
     if (Number.isFinite(q)) return Math.min(Math.max(q, 1), room.capacidad);
     return Math.min(2, room.capacidad);
   });
-  const [nombre, setNombre] = useState(user?.nombre ?? '');
-  const [telefono, setTelefono] = useState(user?.telefono ?? '');
-  const [notas, setNotas] = useState('');
+  const [servicios, setServicios] = useState([]);
   const [errores, setErrores] = useState({});
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState('');
   const [reserva, setReserva] = useState(null);
+  const [copiado, setCopiado] = useState(false);
+  // estado: idle | loading | ok | error
+  const [disp, setDisp] = useState({ estado: 'idle', libres: 0, base: null, error: '' });
 
   const tituloRef = useRef(null);
 
@@ -87,10 +113,45 @@ export default function Booking() {
     tituloRef.current?.focus();
   }, [step]);
 
-  const noches = room && checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
-  const subtotal = noches * (room?.precio ?? 0);
-  const iva = Math.round(subtotal * IVA);
-  const total = subtotal + iva;
+  const fechasValidas = Boolean(checkIn && checkOut && checkIn >= todayStr() && checkOut > checkIn);
+
+  // Consulta de disponibilidad en el backend con debounce; se ignoran respuestas viejas.
+  useEffect(() => {
+    if (!room || !fechasValidas) {
+      setDisp({ estado: 'idle', libres: 0, base: null, error: '' });
+      return undefined;
+    }
+    let activo = true;
+    setDisp((d) => ({ ...d, estado: 'loading', error: '' }));
+    const t = setTimeout(() => {
+      getAvailability(checkIn, checkOut, room.id)
+        .then((libres) => {
+          if (!activo) return;
+          setDisp({
+            estado: 'ok',
+            libres: libres.length,
+            base: libres[0]?.basePricePerNight ?? null,
+            error: '',
+          });
+        })
+        .catch((err) => {
+          if (activo) setDisp({ estado: 'error', libres: 0, base: null, error: err.message });
+        });
+    }, 300);
+    return () => {
+      activo = false;
+      clearTimeout(t);
+    };
+  }, [room, checkIn, checkOut, fechasValidas]);
+
+  const noches = room && fechasValidas ? nightsBetween(checkIn, checkOut) : 0;
+  const base = disp.base ?? room?.precio ?? 0;
+  const costoHabitacion = noches ? estimateRoomCost(base, checkIn, checkOut) : 0;
+  const seleccionados = SERVICIOS.filter((s) => servicios.includes(s.id));
+  const costoServicios = seleccionados.reduce((acc, s) => acc + servicioCost(s, noches), 0);
+  const total = costoHabitacion + costoServicios;
+  const temporadaAlta = noches > 0 && tocaTemporadaAlta(checkIn, checkOut);
+  const sinCupo = disp.estado === 'error' || (disp.estado === 'ok' && disp.libres === 0);
 
   if (!room) {
     return (
@@ -126,31 +187,25 @@ export default function Booking() {
       e.huespedes = `Esta habitacion admite entre 1 y ${room.capacidad} huespedes`;
     }
     setErrores(e);
-    return Object.keys(e).length === 0;
+    return Object.keys(e).length === 0 && disp.estado === 'ok' && disp.libres > 0;
   }
 
-  function validarPaso2() {
-    const e = {};
-    if (!nombre.trim()) e.nombre = 'Escribe el nombre del titular';
-    if (!telefono.trim()) e.telefono = 'Escribe un telefono de contacto';
-    else if (telefono.replace(/\D/g, '').length < 7) {
-      e.telefono = 'Revisa el telefono: debe tener al menos 7 digitos';
-    }
-    setErrores(e);
-    return Object.keys(e).length === 0;
+  function toggleServicio(id) {
+    setServicios((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   }
 
   function continuar() {
     if (step === 1 && validarPaso1()) {
       setDir(1);
       setStep(2);
-    } else if (step === 2 && validarPaso2()) {
+    } else if (step === 2) {
       confirmar();
     }
   }
 
   function atras() {
     setDir(-1);
+    setErrorEnvio('');
     setStep((s) => Math.max(1, s - 1));
   }
 
@@ -159,12 +214,11 @@ export default function Booking() {
     setErrorEnvio('');
     try {
       const r = await createReservation({
-        userId: user.id,
-        room,
+        user,
+        roomType: room.id,
         checkIn,
         checkOut,
-        huespedes: Number(huespedes),
-        notas: notas.trim(),
+        servicios,
       });
       setReserva(r);
       setDir(1);
@@ -173,6 +227,16 @@ export default function Booking() {
       setErrorEnvio(err.message);
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function copiarCodigo() {
+    try {
+      await navigator.clipboard.writeText(reserva.reservationId);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      // portapapeles no disponible: el codigo sigue visible para copiarlo a mano
     }
   }
 
@@ -321,9 +385,42 @@ export default function Booking() {
                         </p>
                       )}
                     </div>
+
+                    <div className="disp-status" aria-live="polite">
+                      {disp.estado === 'loading' && (
+                        <p className="disp disp--loading">
+                          <Loader2 size={18} className="spinner" aria-hidden="true" />
+                          Consultando disponibilidad...
+                        </p>
+                      )}
+                      {disp.estado === 'ok' && disp.libres > 0 && (
+                        <p className="disp disp--ok">
+                          <CircleCheck size={18} aria-hidden="true" />
+                          {disp.libres} {disp.libres === 1 ? 'habitacion disponible' : 'habitaciones disponibles'}
+                        </p>
+                      )}
+                      {disp.estado === 'ok' && disp.libres === 0 && (
+                        <p className="disp disp--error">
+                          <CircleAlert size={18} aria-hidden="true" />
+                          Sin disponibilidad para esas fechas
+                        </p>
+                      )}
+                      {disp.estado === 'error' && (
+                        <p className="disp disp--error">
+                          <CircleAlert size={18} aria-hidden="true" />
+                          {disp.error}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="booking-actions">
                       <span aria-hidden="true" />
-                      <button type="button" className="btn btn-primary" onClick={continuar}>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={continuar}
+                        disabled={disp.estado === 'loading' || sinCupo}
+                      >
                         Continuar
                         <ArrowRight size={18} aria-hidden="true" />
                       </button>
@@ -334,76 +431,73 @@ export default function Booking() {
                 {step === 2 && (
                   <section aria-labelledby="paso2-titulo">
                     <h2 id="paso2-titulo" ref={tituloRef} tabIndex={-1} className="step-title">
-                      Datos del titular
+                      Titular y servicios
                     </h2>
-                    <div className="field">
-                      <label htmlFor="nombre">Nombre completo</label>
-                      <input
-                        id="nombre"
-                        type="text"
-                        autoComplete="name"
-                        value={nombre}
-                        aria-invalid={!!errores.nombre}
-                        aria-describedby={errores.nombre ? 'err-nombre' : undefined}
-                        onChange={(e) => {
-                          setNombre(e.target.value);
-                          limpiarError('nombre');
-                        }}
-                      />
-                      {errores.nombre && (
-                        <p className="field-error" id="err-nombre">
-                          {errores.nombre}
-                        </p>
-                      )}
+                    <div className="field-row">
+                      <div className="field">
+                        <label htmlFor="nombre">Titular</label>
+                        <input
+                          id="nombre"
+                          type="text"
+                          value={user.nombre}
+                          readOnly
+                          className="input-readonly"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="email">Correo electronico</label>
+                        <input
+                          id="email"
+                          type="email"
+                          value={user.email}
+                          readOnly
+                          className="input-readonly"
+                        />
+                      </div>
                     </div>
-                    <div className="field">
-                      <label htmlFor="email">Correo electronico</label>
-                      <input
-                        id="email"
-                        type="email"
-                        value={user.email}
-                        readOnly
-                        className="input-readonly"
-                        aria-describedby="email-hint"
-                      />
-                      <p className="field-hint" id="email-hint">
-                        Es el correo de tu cuenta; alli enviaremos la confirmacion.
-                      </p>
-                    </div>
-                    <div className="field">
-                      <label htmlFor="telefono">Telefono de contacto</label>
-                      <input
-                        id="telefono"
-                        type="tel"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        value={telefono}
-                        aria-invalid={!!errores.telefono}
-                        aria-describedby={errores.telefono ? 'err-telefono' : undefined}
-                        onChange={(e) => {
-                          setTelefono(e.target.value);
-                          limpiarError('telefono');
-                        }}
-                      />
-                      {errores.telefono && (
-                        <p className="field-error" id="err-telefono">
-                          {errores.telefono}
-                        </p>
-                      )}
-                    </div>
-                    <div className="field">
-                      <label htmlFor="notas">
-                        Peticiones especiales <span className="label-opcional">(opcional)</span>
-                      </label>
-                      <textarea
-                        id="notas"
-                        rows={4}
-                        maxLength={300}
-                        placeholder="Alergias, horario de llegada, celebraciones..."
-                        value={notas}
-                        onChange={(e) => setNotas(e.target.value)}
-                      />
-                    </div>
+                    <p className="field-hint">La reserva queda a nombre de tu cuenta.</p>
+
+                    <fieldset className="servicios">
+                      <legend>
+                        Servicios adicionales <span className="label-opcional">(opcional)</span>
+                      </legend>
+                      {SERVICIOS.map((s) => {
+                        const Icon = ICONOS_SERVICIO[s.id];
+                        const activo = servicios.includes(s.id);
+                        return (
+                          <motion.label
+                            key={s.id}
+                            className={`servicio-opcion${activo ? ' is-selected' : ''}`}
+                            animate={{ scale: activo && !reduce ? 1.01 : 1 }}
+                            transition={{ duration: 0.2, ease: EASE }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={activo}
+                              onChange={() => toggleServicio(s.id)}
+                            />
+                            <span className="servicio-opcion-icon" aria-hidden="true">
+                              <Icon size={22} />
+                            </span>
+                            <span className="servicio-opcion-info">
+                              <strong>{s.nombre}</strong>
+                              <span>{s.detalle}</span>
+                            </span>
+                            <span className="servicio-opcion-precio">
+                              {formatPrecio(s.precio)}
+                              {s.porNoche ? ' / noche' : ''}
+                              {s.porNoche && noches > 0 && (
+                                <small>
+                                  {noches} {noches === 1 ? 'noche' : 'noches'}:{' '}
+                                  {formatPrecio(servicioCost(s, noches))}
+                                </small>
+                              )}
+                            </span>
+                          </motion.label>
+                        );
+                      })}
+                    </fieldset>
+
                     {errorEnvio && (
                       <p className="form-error" role="alert">
                         <CircleAlert size={18} aria-hidden="true" />
@@ -441,11 +535,7 @@ export default function Booking() {
 
                 {step === 3 && reserva && (
                   <section className="booking-success" aria-labelledby="exito-titulo">
-                    <motion.svg
-                      viewBox="0 0 52 52"
-                      className="success-check"
-                      aria-hidden="true"
-                    >
+                    <motion.svg viewBox="0 0 52 52" className="success-check" aria-hidden="true">
                       <motion.circle
                         cx="26"
                         cy="26"
@@ -471,27 +561,42 @@ export default function Booking() {
                       Reserva confirmada
                     </h2>
                     <p className="success-text">
-                      Tu estadia en {room.nombre} quedo reservada. Guarda este codigo:
+                      Te asignamos la habitacion {reserva.room.roomNumber} (piso {reserva.room.floor}).
+                      Guarda tu codigo de reserva:
                     </p>
-                    <p className="reserva-codigo">{reserva.id}</p>
+                    <div className="codigo-wrap">
+                      <code className="reserva-codigo">{reserva.reservationId}</code>
+                      <button type="button" className="btn btn-ghost btn-copiar" onClick={copiarCodigo}>
+                        {copiado ? (
+                          <Check size={18} aria-hidden="true" />
+                        ) : (
+                          <Copy size={18} aria-hidden="true" />
+                        )}
+                        {copiado ? 'Copiado' : 'Copiar codigo'}
+                      </button>
+                    </div>
                     <dl className="success-resumen">
                       <div>
                         <dt>Fechas</dt>
                         <dd>
-                          {formatFecha(reserva.checkIn)} - {formatFecha(reserva.checkOut)}
+                          {formatFecha(reserva.checkInDate)} - {formatFecha(reserva.checkOutDate)}
                         </dd>
                       </div>
                       <div>
                         <dt>Noches</dt>
-                        <dd>{reserva.noches}</dd>
+                        <dd>{reserva.nights}</dd>
                       </div>
                       <div>
-                        <dt>Huespedes</dt>
-                        <dd>{reserva.huespedes}</dd>
+                        <dt>Servicios</dt>
+                        <dd>
+                          {reserva.additionalServices.length
+                            ? reserva.additionalServices.map(nombreServicio).join(', ')
+                            : 'Ninguno'}
+                        </dd>
                       </div>
                       <div>
-                        <dt>Total (IVA incluido)</dt>
-                        <dd>{formatCOP(totalConIva(reserva.total))}</dd>
+                        <dt>Total estimado</dt>
+                        <dd>{formatPrecio(reserva.estimatedTotal)}</dd>
                       </div>
                     </dl>
                     <div className="booking-actions booking-actions-center">
@@ -520,10 +625,14 @@ export default function Booking() {
                 <div className="summary-row">
                   <dt>Fechas</dt>
                   <dd>
-                    {checkIn && checkOut
+                    {fechasValidas
                       ? `${formatFecha(checkIn)} - ${formatFecha(checkOut)}`
                       : 'Por elegir'}
                   </dd>
+                </div>
+                <div className="summary-row">
+                  <dt>Precio base por noche</dt>
+                  <dd>{formatPrecio(base)}</dd>
                 </div>
                 <div className="summary-row">
                   <dt>Noches</dt>
@@ -532,28 +641,31 @@ export default function Booking() {
                   </dd>
                 </div>
                 <div className="summary-row">
-                  <dt>Precio por noche</dt>
-                  <dd>{formatCOP(room.precio)}</dd>
-                </div>
-                <div className="summary-row">
-                  <dt>Subtotal</dt>
+                  <dt>Habitacion (estimado)</dt>
                   <dd>
-                    <ValorAnimado valor={formatCOP(subtotal)} reduce={reduce} />
+                    <ValorAnimado valor={formatPrecio(costoHabitacion)} reduce={reduce} />
                   </dd>
                 </div>
-                <div className="summary-row">
-                  <dt>IVA (19%)</dt>
-                  <dd>
-                    <ValorAnimado valor={formatCOP(iva)} reduce={reduce} />
-                  </dd>
-                </div>
+                {seleccionados.map((s) => (
+                  <div className="summary-row" key={s.id}>
+                    <dt>{s.nombre}</dt>
+                    <dd>
+                      <ValorAnimado valor={formatPrecio(servicioCost(s, noches))} reduce={reduce} />
+                    </dd>
+                  </div>
+                ))}
                 <div className="summary-row summary-total">
-                  <dt>Total</dt>
+                  <dt>Total estimado</dt>
                   <dd>
-                    <ValorAnimado valor={formatCOP(total)} reduce={reduce} />
+                    <ValorAnimado valor={formatPrecio(total)} reduce={reduce} />
                   </dd>
                 </div>
               </dl>
+              {temporadaAlta && (
+                <p className="summary-nota">
+                  Incluye tarifa de temporada alta (x1.5) en junio, julio y diciembre.
+                </p>
+              )}
             </div>
           </aside>
         </div>

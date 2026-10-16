@@ -72,7 +72,7 @@
 
 .reserva-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
   gap: var(--space-4);
   align-items: center;
   padding: var(--space-6);
@@ -331,5 +331,230 @@
 
   .reserva-total {
     text-align: left;
+  }
+}
+
+.reservas-nota {
+  margin: var(--space-2) 0 0;
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}
+
+.btn-reintentar {
+  margin-left: auto;
+  min-height: 40px;
+}
+
+.reserva-img {
+  width: 120px;
+  height: 100%;
+  min-height: 96px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.reserva-info {
+  min-width: 0;
+}
+
+.reserva-habitacion {
+  margin: var(--space-1) 0 0;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.reserva-codigo code,
+.reserva-llave code,
+.llave-grande {
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  word-break: break-all;
+}
+
+.reserva-servicios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reserva-servicios li {
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reserva-llave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-card));
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.reserva-fin {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.badge-confirmed {
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-card));
+  color: var(--color-success);
+}
+
+.badge-checked_in {
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-card));
+  color: var(--color-accent);
+}
+
+.badge-checked_out {
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+}
+
+/* Dialogo: exito de check-in y factura */
+.dialog--factura {
+  max-width: 600px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.dialog-exito {
+  text-align: center;
+}
+
+.dialog-exito-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-card));
+  color: var(--color-accent);
+}
+
+.llave-grande {
+  display: block;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-card));
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dialog-exito .dialog-actions {
+  justify-content: center;
+}
+
+.factura {
+  margin-bottom: var(--space-6);
+}
+
+.factura-datos,
+.factura-totales {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-6);
+  margin: 0 0 var(--space-4);
+}
+
+.factura dt {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.factura dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  word-break: break-word;
+}
+
+.factura-tabla-wrap {
+  overflow-x: auto;
+  margin-bottom: var(--space-4);
+}
+
+.factura-tabla {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.factura-tabla caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.factura-tabla th,
+.factura-tabla td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-muted);
+  text-align: right;
+}
+
+.factura-tabla th:first-child,
+.factura-tabla td:first-child {
+  text-align: left;
+}
+
+.factura-tabla th {
+  color: var(--color-muted-foreground);
+  font-weight: 600;
+}
+
+.factura-totales {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.factura-gran-total dd {
+  font-size: 22px;
+  color: var(--color-accent);
+}
+
+@media (max-width: 640px) {
+  .reserva-img {
+    width: 100%;
+    height: 140px;
+  }
+}
+
+@media print {
+  .navbar,
+  .footer,
+  .reservas-page > .container,
+  .dialog-actions {
+    display: none !important;
+  }
+
+  .dialog-overlay {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+  }
+
+  .dialog {
+    box-shadow: none;
+    max-height: none;
   }
 }

@@ -7,8 +7,8 @@ Frontend de **Hotel Aurora**, una aplicacion web para reservar habitaciones de h
 - Registro e inicio de sesion de usuarios con validacion en vivo y medidor de fuerza de contrasena.
 - Pagina de inicio con hero animado, buscador de fechas, habitaciones destacadas, servicios y testimonios.
 - Catalogo de habitaciones con filtros por tipo, huespedes y precio.
-- Reserva en tres pasos (fechas, datos, confirmacion) con resumen y calculo de IVA.
-- "Mis reservas": historial, filtros por estado y cancelacion.
+- Reserva en tres pasos (fechas con disponibilidad real, servicios adicionales, confirmacion).
+- "Mis reservas": historial, filtros por estado, check-in con llave digital y check-out con factura.
 - Rutas protegidas: reservar y ver reservas exige sesion iniciada.
 - Animaciones con framer-motion que respetan `prefers-reduced-motion`.
 
@@ -48,11 +48,27 @@ src/
   styles/       tokens y estilos globales
 ```
 
-## Datos
+## Backend
 
-Mientras no hay backend conectado, usuarios y reservas se guardan en `localStorage`
-desde `src/services/`. Para conectar una API basta con reemplazar esas funciones por
-llamadas `fetch` manteniendo la misma firma.
+El frontend consume la API de
+[sistema-reservas-de-hotel](https://github.com/GUERRREROALEXANDER/sistema-reservas-de-hotel)
+(Spring Boot, `/api/hotel`): disponibilidad, reservas, servicios adicionales, check-in con
+llave digital y check-out con factura. Precios en USD, con temporada alta (x1.5) en junio,
+julio y diciembre.
+
+La URL del backend se configura con la variable `VITE_API_URL` (ver `.env.example`):
+
+```bash
+# .env.development.local
+VITE_API_URL=http://localhost:8080
+```
+
+En Vercel se define en Project Settings → Environment Variables y requiere volver a desplegar.
+
+El backend no maneja usuarios: el registro e inicio de sesion se guardan en `localStorage`,
+y cada usuario conserva en su navegador los codigos de sus reservas, que se consultan al
+backend en tiempo real. Como el backend guarda los datos en memoria, las reservas se
+pierden cuando este se reinicia.
 
 ## Equipo
 
