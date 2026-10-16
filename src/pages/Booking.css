@@ -1,0 +1,369 @@
+.booking-page {
+  padding: 96px 0 var(--space-16);
+}
+
+.booking-missing {
+  padding: var(--space-16) var(--space-4);
+  text-align: center;
+}
+
+.booking-missing p {
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-6);
+}
+
+.booking-header {
+  margin-bottom: var(--space-6);
+}
+
+.booking-eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.booking-header h1 {
+  margin: 0;
+}
+
+/* Indicador de pasos */
+.booking-steps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+}
+
+.step-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.step-wrap:last-child {
+  flex: none;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.step-dot {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.step-check {
+  display: grid;
+  place-items: center;
+}
+
+.step-item.is-active .step-dot {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 15%, transparent);
+}
+
+.step-item.is-done .step-dot {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.step-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.step-item.is-active .step-label {
+  color: var(--color-primary-dark);
+}
+
+.step-line {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  min-width: 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.step-line-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-accent);
+  transform-origin: left;
+}
+
+/* Layout principal */
+.booking-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.booking-panel {
+  padding: var(--space-8);
+  overflow: hidden;
+}
+
+.step-title {
+  margin-bottom: var(--space-6);
+}
+
+.step-title:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.booking-panel .field textarea {
+  min-height: 96px;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-card);
+  font: inherit;
+  resize: vertical;
+  transition: border-color var(--duration-fast);
+}
+
+.booking-panel .field textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.label-opcional {
+  font-weight: 400;
+  color: var(--color-muted-foreground);
+}
+
+.input-readonly {
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+}
+
+.form-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-destructive) 8%, var(--color-card));
+  color: var(--color-destructive);
+  font-size: 15px;
+}
+
+.booking-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.booking-actions-center {
+  justify-content: center;
+}
+
+/* Resumen lateral */
+.booking-summary {
+  position: sticky;
+  top: 96px;
+  overflow: hidden;
+}
+
+.summary-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.summary-body {
+  padding: var(--space-6);
+}
+
+.summary-name {
+  margin: 0 0 var(--space-1);
+  font-size: 22px;
+}
+
+.summary-tipo {
+  margin: 0 0 var(--space-4);
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}
+
+.summary-list {
+  margin: 0;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  font-size: 15px;
+}
+
+.summary-row dt {
+  color: var(--color-muted-foreground);
+}
+
+.summary-row dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.summary-total {
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  font-size: 18px;
+}
+
+.summary-total dt,
+.summary-total dd {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.valor-animado {
+  display: inline-block;
+}
+
+/* Exito */
+.booking-success {
+  text-align: center;
+}
+
+.success-check {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto var(--space-4);
+  stroke: var(--color-success);
+}
+
+.success-text {
+  color: var(--color-muted-foreground);
+  margin: 0 0 var(--space-3);
+}
+
+.reserva-codigo {
+  display: inline-block;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-2) var(--space-6);
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-card));
+  font-family: var(--font-heading);
+  font-size: 26px;
+  letter-spacing: 0.15em;
+  color: var(--color-accent);
+}
+
+.success-resumen {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3) var(--space-6);
+  max-width: 460px;
+  margin: 0 auto var(--space-6);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-muted);
+  text-align: left;
+}
+
+.success-resumen dt {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.success-resumen dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+/* Spinner de carga */
+.spinner {
+  animation: booking-spin 0.9s linear infinite;
+}
+
+@keyframes booking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 0.9s !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 1023px) {
+  .booking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-summary {
+    position: static;
+  }
+}
+
+@media (max-width: 560px) {
+  .booking-panel {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .step-label {
+    font-size: 13px;
+  }
+
+  .success-resumen {
+    grid-template-columns: 1fr;
+  }
+}

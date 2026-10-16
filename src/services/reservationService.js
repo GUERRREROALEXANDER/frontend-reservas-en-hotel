@@ -2,6 +2,13 @@ import { readJSON, writeJSON, delay } from './storage';
 
 const KEY = 'hotel.reservations';
 
+// IVA aplicado sobre el subtotal de la reserva (el servicio guarda el subtotal).
+export const IVA = 0.19;
+
+export function totalConIva(subtotal) {
+  return Math.round(subtotal * (1 + IVA));
+}
+
 export function nightsBetween(checkIn, checkOut) {
   const ms = new Date(checkOut) - new Date(checkIn);
   return Math.max(0, Math.round(ms / 86400000));
