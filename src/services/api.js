@@ -1,5 +1,9 @@
-// Cliente HTTP del backend sistema-reservas-de-hotel (Spring Boot, /api/hotel).
-const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8080').replace(/\/$/, '');
+// Cliente HTTP de la API del hotel (/api/hotel). Sin VITE_API_URL en produccion se usa
+// el mismo dominio: la funcion serverless de /api en Vercel. En desarrollo, el backend
+// Spring Boot local.
+const API_URL = (
+  import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? 'http://localhost:8080' : '')
+).replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(message, status) {
