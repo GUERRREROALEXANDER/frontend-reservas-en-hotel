@@ -10,3 +10,4 @@ AGENTS.md
 .vercel/
 .vercel
 .env*
+!.env.example
