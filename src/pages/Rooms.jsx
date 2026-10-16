@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { SearchX } from 'lucide-react';
+import { CircleAlert, Loader2, SearchX } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import RoomCard from '../components/RoomCard';
-import { rooms, formatCOP } from '../data/rooms';
+import { rooms, formatPrecio } from '../data/rooms';
+import { getAvailability } from '../services/reservationService';
 import './Rooms.css';
 
 const precios = rooms.map((r) => r.precio);
@@ -25,6 +26,38 @@ export default function Rooms() {
     Math.min(Math.max(huespedesParam, 1), CAPACIDAD_MAX),
   );
   const [precioMax, setPrecioMax] = useState(PRECIO_MAX);
+  // Habitaciones libres por tipo segun el backend: { SINGLE: 6, DOUBLE: 0, ... }
+  const [disponibilidad, setDisponibilidad] = useState(null);
+  const [consultando, setConsultando] = useState(false);
+  const [errorDisp, setErrorDisp] = useState('');
+
+  useEffect(() => {
+    if (!checkIn || !checkOut) {
+      setDisponibilidad(null);
+      return undefined;
+    }
+    let activo = true;
+    setConsultando(true);
+    setErrorDisp('');
+    getAvailability(checkIn, checkOut)
+      .then((libres) => {
+        if (!activo) return;
+        const conteo = Object.fromEntries(rooms.map((r) => [r.id, 0]));
+        libres.forEach((h) => {
+          conteo[h.type] = (conteo[h.type] ?? 0) + 1;
+        });
+        setDisponibilidad(conteo);
+      })
+      .catch((err) => {
+        if (activo) setErrorDisp(err.message);
+      })
+      .finally(() => {
+        if (activo) setConsultando(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [checkIn, checkOut]);
 
   const filtradas = useMemo(
     () =>
@@ -93,27 +126,38 @@ export default function Rooms() {
 
           <div className="field filters-field filters-range">
             <label htmlFor="filtro-precio">
-              Precio maximo por noche: <strong>{formatCOP(precioMax)}</strong>
+              Precio maximo por noche: <strong>{formatPrecio(precioMax)}</strong>
             </label>
             <input
               id="filtro-precio"
               type="range"
               min={PRECIO_MIN}
               max={PRECIO_MAX}
-              step={10000}
+              step={10}
               value={precioMax}
               onChange={(e) => setPrecioMax(Number(e.target.value))}
             />
             <div className="filters-range-marks" aria-hidden="true">
-              <span>{formatCOP(PRECIO_MIN)}</span>
-              <span>{formatCOP(PRECIO_MAX)}</span>
+              <span>{formatPrecio(PRECIO_MIN)}</span>
+              <span>{formatPrecio(PRECIO_MAX)}</span>
             </div>
           </div>
         </div>
 
         <p className="rooms-count" role="status">
-          {filtradas.length} {filtradas.length === 1 ? 'habitacion disponible' : 'habitaciones disponibles'}
+          {consultando ? (
+            <>
+              <Loader2 size={16} className="rooms-spin" aria-hidden="true" /> Consultando disponibilidad...
+            </>
+          ) : (
+            `${filtradas.length} ${filtradas.length === 1 ? 'tipo de habitacion' : 'tipos de habitacion'}`
+          )}
         </p>
+        {errorDisp && (
+          <p className="field-error rooms-error" role="alert">
+            <CircleAlert size={16} aria-hidden="true" /> {errorDisp}
+          </p>
+        )}
       </section>
 
       <section className="container rooms-results" aria-label="Resultados">
@@ -126,7 +170,12 @@ export default function Rooms() {
           >
             <AnimatePresence mode="popLayout">
               {filtradas.map((room) => (
-                <RoomCard key={room.id} room={room} search={bookingSearch} />
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  search={bookingSearch}
+                  disponibles={disponibilidad?.[room.id]}
+                />
               ))}
             </AnimatePresence>
           </motion.div>

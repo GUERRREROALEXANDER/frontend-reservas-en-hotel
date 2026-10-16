@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Users, BedDouble, Ruler } from 'lucide-react';
-import { formatCOP } from '../data/rooms';
+import { formatPrecio } from '../data/rooms';
 import './RoomCard.css';
 
 // Tarjeta de habitacion. `search` conserva los query params de fechas (ej. "?checkIn=...&checkOut=...").
-export default function RoomCard({ room, search = '' }) {
+// `disponibles` llega del backend cuando hay fechas elegidas (undefined = sin consultar).
+export default function RoomCard({ room, search = '', disponibles }) {
+  const agotada = disponibles === 0;
   const reduce = useReducedMotion();
 
   const item = {
@@ -32,6 +34,13 @@ export default function RoomCard({ room, search = '' }) {
       <div className="room-card-media">
         <img src={room.imagen} alt={`Vista de ${room.nombre}`} loading="lazy" />
         <span className="room-card-badge">{room.tipo}</span>
+        {disponibles !== undefined && (
+          <span className={`room-card-stock${agotada ? ' room-card-stock--out' : ''}`}>
+            {agotada
+              ? 'Sin disponibilidad'
+              : `${disponibles} ${disponibles === 1 ? 'disponible' : 'disponibles'}`}
+          </span>
+        )}
       </div>
       <div className="room-card-body">
         <h3 className="room-card-name">{room.nombre}</h3>
@@ -58,11 +67,17 @@ export default function RoomCard({ room, search = '' }) {
         </ul>
         <div className="room-card-footer">
           <p className="room-card-price">
-            <strong>{formatCOP(room.precio)}</strong> <span>/ noche</span>
+            <strong>{formatPrecio(room.precio)}</strong> <span>/ noche</span>
           </p>
-          <Link to={`/reservar/${room.id}${search}`} className="btn btn-primary room-card-btn">
-            Reservar
-          </Link>
+          {agotada ? (
+            <button type="button" className="btn btn-primary room-card-btn" disabled>
+              Agotada
+            </button>
+          ) : (
+            <Link to={`/reservar/${room.id}${search}`} className="btn btn-primary room-card-btn">
+              Reservar
+            </Link>
+          )}
         </div>
       </div>
     </motion.article>

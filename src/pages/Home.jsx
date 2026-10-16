@@ -81,7 +81,7 @@ const testimonios = [
     ciudad: 'Cartagena',
     estrellas: 5,
     texto:
-      'Viajamos con dos ninos y la suite familiar fue perfecta: espaciosa, limpia y con todo lo que necesitabamos. Los chicos no se querian ir.',
+      'Viajamos con dos ninos y la suite fue perfecta: espaciosa, limpia y con todo lo que necesitabamos. Los chicos no se querian ir.',
   },
 ];
 
@@ -213,7 +213,7 @@ function SearchWidget() {
             value={huespedes}
             onChange={(e) => setHuespedes(e.target.value)}
           >
-            {[1, 2, 3, 4, 5].map((n) => (
+            {[1, 2, 3, 4].map((n) => (
               <option key={n} value={n}>
                 {n} {n === 1 ? 'huesped' : 'huespedes'}
               </option>
