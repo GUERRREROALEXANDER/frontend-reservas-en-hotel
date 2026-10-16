@@ -8,3 +8,5 @@ dist/
 .claude/
 AGENTS.md
 .vercel/
+.vercel
+.env*
